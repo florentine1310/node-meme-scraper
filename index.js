@@ -1,52 +1,58 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import fetch from 'node-fetch';
 import puppeteer from 'puppeteer';
 
 // Fetch data from URL
-const url = 'https://memegen-link-examples-upleveled.netlify.app/';
+const scrapeUrl = 'https://memegen-link-examples-upleveled.netlify.app/';
 
 const imageParser = async () => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
-  await page.goto(url);
+  await page.goto(scrapeUrl);
 
   // Parse HTML and extract img tags
-  const allImages = await page.evaluate(() => {
-    const images = document.querySelectorAll('img');
-    console.log('Found images:', images.length); // Checking if images are found
-    return Array.from(images) // Push scraped img data into an array
-      .slice(0, 10) // Get only first 10 images
-      .map((imageFile) => {
-        return imageFile.src;
-      });
-  });
-  await browser.close();
-  return allImages; // Return the array of images
+  try {
+    const allImages = await page.evaluate(() => {
+      const images = Array.from(document.getElementsByTagName('img'));
+      return images.slice(0, 10).map((imageFile) => imageFile.src);
+    });
+    await browser.close();
+    return allImages;
+  } catch (err) {
+    console.error(err);
+  }
 };
 // Run the image parser
-imageParser();
+await imageParser();
 
 // Download images and save them to memes directory
 const memesDirectory = './memes';
+try {
+  if (!fs.existsSync(memesDirectory)) {
+    fs.mkdirSync(memesDirectory);
+  }
+} catch (err) {
+  console.error(err);
+}
 const downloadImages = async () => {
   try {
-    const imageUrls = await imageParser(); // Wait for imageParser to complete
+    const imageUrls = await imageParser();
     // Loop through the image URL array
     for (const [index, url] of imageUrls.entries()) {
       try {
         const response = await fetch(url);
         const buffer = Buffer.from(await response.arrayBuffer());
-        // Save each image to file
         const imgFilePath = `${memesDirectory}/${(index + 1).toString().padStart(2, '0')}.jpg`;
         await fs.promises.writeFile(imgFilePath, buffer);
         console.log('file was saved successfully');
-      } catch (error) {
-        console.error(`Failed to save image ${url}:`, error.message);
+      } catch (err) {
+        console.error(`Failed to save image: ${url}.${err.message}`);
       }
     }
-  } catch (error) {
-    console.error(`an error occurred when processing the images`);
+  } catch (err) {
+    console.error(
+      `an error occurred when processing the images:${err.message}`,
+    );
   }
 };
-// Run the download image function
-downloadImages();
+await downloadImages();
