@@ -6,7 +6,9 @@ import puppeteer from 'puppeteer';
 const scrapeUrl = 'https://memegen-link-examples-upleveled.netlify.app/';
 
 const imageParser = async () => {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    args: ['--no-sandbox', '--disable-setuid-sandbox'], // Disable sandboxing
+  });
   const page = await browser.newPage();
   await page.goto(scrapeUrl);
 
