@@ -1,4 +1,6 @@
+import { exec } from 'node:child_process';
 import fs from 'node:fs';
+import { promisify } from 'node:util';
 import fetch from 'node-fetch';
 import puppeteer from 'puppeteer';
 
@@ -6,8 +8,10 @@ import puppeteer from 'puppeteer';
 const scrapeUrl = 'https://memegen-link-examples-upleveled.netlify.app/';
 
 const imageParser = async () => {
+  const { stdout: chromiumPath } = await promisify(exec)('which chromium');
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox'], // Disable sandboxing
+    executablePath: chromiumPath.trim(),
   });
   const page = await browser.newPage();
   await page.goto(scrapeUrl);
