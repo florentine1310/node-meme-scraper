@@ -1,0 +1,9 @@
+modules = ["nodejs-20"]
+run = "node index.js"
+
+[nix]
+channel = "stable-24_05"
+pkgs.chromium
+
+[deployment]
+run = ["sh", "-c", "node index.js"]
